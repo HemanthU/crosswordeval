@@ -2,45 +2,27 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Crossword Answer Checker</title>
+<title>Event + Crossword Checker</title>
 
 <style>
 body{
-  font-family: Arial;
-  background:#0f172a;
+  margin:0;
+  font-family:sans-serif;
+  background:linear-gradient(135deg,#0f172a,#1e293b);
   color:white;
   text-align:center;
   padding:20px;
 }
 
-h1{margin-bottom:10px;}
-
-.container{
-  max-width:650px;
-  margin:auto;
-  background:#1e293b;
-  padding:20px;
-  border-radius:12px;
+/* 🔥 BIG TIMER */
+#timer{
+  font-size:120px; /* increased */
+  font-weight:bold;
+  margin:20px 0;
+  text-shadow:0 0 15px #22c55e,0 0 35px #22c55e;
 }
 
-input{
-  width:80%;
-  padding:8px;
-  margin:6px;
-  border-radius:6px;
-  border:none;
-  text-align:center;
-  text-transform:uppercase;
-}
-
-textarea{
-  width:90%;
-  height:100px;
-  border-radius:8px;
-  padding:10px;
-  margin:10px 0;
-}
-
+/* BUTTON */
 button{
   padding:10px 15px;
   border:none;
@@ -48,138 +30,211 @@ button{
   background:#22c55e;
   color:white;
   cursor:pointer;
-  margin-top:10px;
+  margin:5px;
 }
 
-.result{
-  margin-left:10px;
-  font-weight:bold;
+/* CARD */
+.container{
+  max-width:750px;
+  margin:auto;
+  background:rgba(255,255,255,0.05);
+  padding:20px;
+  border-radius:16px;
+  margin-bottom:20px;
 }
 
-#score{
-  font-size:22px;
-  margin-top:15px;
+/* INPUT */
+input{
+  padding:8px;
+  border-radius:6px;
+  border:none;
 }
+
+/* TEXTAREA */
+textarea{
+  width:90%;
+  height:120px;
+  border-radius:8px;
+  padding:10px;
+  margin:10px 0;
+}
+
+/* RESULT */
+#result{text-align:left;}
+.correct{color:#22c55e;}
+.wrong{color:#ef4444;}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+td,th{
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
 </style>
 </head>
 
 <body>
 
-<h1>🧩 Crossword Checker (BLOCK LETTERS)</h1>
+<h1>⚡ Event Dashboard</h1>
 
+<button id="startBtn" onclick="startTimer()">Start Event</button>
+<button onclick="resetAll()">Reset</button>
+
+<div id="timer">0m 0s</div>
+
+<!-- CHECKER -->
 <div class="container">
 
-<p>📋 Paste answers from Google Lens (optional):</p>
-<textarea id="bulkInput" placeholder="Paste all answers here..."></textarea>
+<h2>🧩 Paste Answers</h2>
 
-<h3>ACROSS</h3>
+<input id="teamName" placeholder="Enter Team Name">
 
-3. <input id="a3"> <span id="r3" class="result"></span><br>
-4. <input id="a4"> <span id="r4" class="result"></span><br>
-8. <input id="a8"> <span id="r8" class="result"></span><br>
-11. <input id="a11"> <span id="r11" class="result"></span><br>
-14. <input id="a14"> <span id="r14" class="result"></span><br>
-15. <input id="a15"> <span id="r15" class="result"></span><br>
+<textarea id="bulkInput" placeholder="Paste answers..."></textarea>
 
-<h3>DOWN</h3>
-
-1. <input id="d1"> <span id="rd1" class="result"></span><br>
-2. <input id="d2"> <span id="rd2" class="result"></span><br>
-5. <input id="d5"> <span id="rd5" class="result"></span><br>
-6. <input id="d6"> <span id="rd6" class="result"></span><br>
-7. <input id="d7"> <span id="rd7" class="result"></span><br>
-9. <input id="d9"> <span id="rd9" class="result"></span><br>
-10. <input id="d10"> <span id="rd10" class="result"></span><br>
-12. <input id="d12"> <span id="rd12" class="result"></span><br>
-13. <input id="d13"> <span id="rd13" class="result"></span><br>
-
-<button onclick="autoFill()">Auto Fill</button>
-<button onclick="checkAnswers()">Check Answers</button>
+<br>
+<button onclick="checkAll()">Check Answers</button>
+<button onclick="submitScore()">Submit Score</button>
 
 <div id="score"></div>
+<div id="result"></div>
+
+</div>
+
+<!-- LEADERBOARD -->
+<div class="container">
+
+<h2>🏆 Leaderboard</h2>
+<div id="board"></div>
 
 </div>
 
 <script>
-const answers = {
-  a3:"ALGORITHM",
-  a4:"WEB BROWSER",
-  a8:"BACKUP",
-  a11:"FOOD DELIVERY APPS",
-  a14:"VIDEO SHARING PLATFORMS",
-  a15:"CLOUD COMPUTING",
+// TIMER
+let startTime = 0;
+let timerStarted = false;
 
-  d1:"OTT PLATFORMS",
-  d2:"PIXEL",
-  d5:"MESSAGING APPS",
-  d6:"STACK",
-  d7:"SOCIAL MEDIA",
-  d9:"RIDE SHARING",
-  d10:"EMAIL SERVICES",
-  d12:"URL",
-  d13:"PASSWORD"
-};
-
-// CLEAN TEXT
-function cleanText(text){
-  return text.toUpperCase().replace(/\s+/g," ").trim();
+function formatTime(sec){
+  let m = Math.floor(sec/60);
+  let s = sec % 60;
+  return m + "m " + s + "s";
 }
 
-// AUTO FILL FROM PASTE
-function autoFill(){
-  let lines = document.getElementById("bulkInput").value.split("\n");
+function startTimer(){
+  if(timerStarted) return;
 
-  let ids = [
-    "a3","a4","a8","a11","a14","a15",
-    "d1","d2","d5","d6","d7","d9","d10","d12","d13"
-  ];
+  timerStarted = true;
+  document.getElementById("startBtn").disabled = true;
 
-  ids.forEach((id,i)=>{
-    if(lines[i]){
-      document.getElementById(id).value = cleanText(lines[i]);
+  startTime = Date.now();
+
+  setInterval(()=>{
+    let t = Math.floor((Date.now()-startTime)/1000);
+    document.getElementById("timer").innerText = formatTime(t);
+  },1000);
+}
+
+// ANSWERS
+const answers = [
+  "ALGORITHM","WEB BROWSER","BACKUP",
+  "FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
+  "OTT PLATFORMS","PIXEL","MESSAGING APPS","STACK",
+  "SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
+];
+
+// CLEAN
+function cleanText(text){
+  return text.toUpperCase().replace(/\s+/g,"").trim();
+}
+
+// CHECK
+let lastScore = 0;
+
+function checkAll(){
+  let input = document.getElementById("bulkInput").value;
+
+  let words = input.split(/[\n,]+/)
+                   .map(x => cleanText(x))
+                   .filter(x => x !== "");
+
+  let score = 0;
+  let resultHTML = "";
+
+  answers.forEach(ans=>{
+    let cleanAns = cleanText(ans);
+
+    if(words.includes(cleanAns)){
+      resultHTML += `<div class="correct">✅ ${ans}</div>`;
+      score++;
+    } else {
+      resultHTML += `<div class="wrong">❌ ${ans}</div>`;
     }
   });
-}
 
-// CHECK FUNCTION
-function check(id, correct, resultId){
-  let val = cleanText(document.getElementById(id).value);
-  let ans = cleanText(correct);
-
-  if(val === ans){
-    document.getElementById(resultId).innerText = "✅";
-    return 1;
-  } else {
-    document.getElementById(resultId).innerText = "❌";
-    return 0;
-  }
-}
-
-// CHECK ALL
-function checkAnswers(){
-  let score = 0;
-  let total = Object.keys(answers).length;
-
-  score += check("a3",answers.a3,"r3");
-  score += check("a4",answers.a4,"r4");
-  score += check("a8",answers.a8,"r8");
-  score += check("a11",answers.a11,"r11");
-  score += check("a14",answers.a14,"r14");
-  score += check("a15",answers.a15,"r15");
-
-  score += check("d1",answers.d1,"rd1");
-  score += check("d2",answers.d2,"rd2");
-  score += check("d5",answers.d5,"rd5");
-  score += check("d6",answers.d6,"rd6");
-  score += check("d7",answers.d7,"rd7");
-  score += check("d9",answers.d9,"rd9");
-  score += check("d10",answers.d10,"rd10");
-  score += check("d12",answers.d12,"rd12");
-  score += check("d13",answers.d13,"rd13");
+  lastScore = score;
 
   document.getElementById("score").innerText =
-    "🎯 Score: " + score + " / " + total;
+    "🎯 Score: " + score + " / " + answers.length;
+
+  document.getElementById("result").innerHTML = resultHTML;
 }
+
+// LEADERBOARD
+let data = JSON.parse(localStorage.getItem("board")) || [];
+
+function submitScore(){
+  let name = document.getElementById("teamName").value;
+
+  if(!name){
+    alert("Enter team name");
+    return;
+  }
+
+  let time = Math.floor((Date.now()-startTime)/1000);
+
+  data.push({
+    name:name,
+    score:lastScore,
+    time:time
+  });
+
+  localStorage.setItem("board", JSON.stringify(data));
+
+  loadBoard();
+}
+
+function loadBoard(){
+  let html = "<table><tr><th>Team</th><th>Score</th><th>Time</th></tr>";
+
+  data.sort((a,b)=>{
+    if(b.score !== a.score) return b.score - a.score;
+    return a.time - b.time;
+  });
+
+  data.forEach(row=>{
+    html += `<tr>
+      <td>${row.name}</td>
+      <td>${row.score}</td>
+      <td>${formatTime(row.time)}</td>
+    </tr>`;
+  });
+
+  html += "</table>";
+
+  document.getElementById("board").innerHTML = html;
+}
+
+// RESET
+function resetAll(){
+  localStorage.removeItem("board");
+  location.reload();
+}
+
+// INIT
+window.onload = loadBoard;
 </script>
 
 </body>

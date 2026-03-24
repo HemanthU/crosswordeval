@@ -15,7 +15,7 @@ body{
 
 h1{text-align:center;}
 
-/* 🔥 BIGGER TIMER */
+/* 🔥 BIG TIMER */
 #timer{
   text-align:center;
   font-size:120px;
@@ -39,7 +39,7 @@ h1{text-align:center;}
 table{width:100%;border-collapse:collapse;}
 td,th{padding:12px;border-bottom:1px solid rgba(255,255,255,0.1);}
 
-/* 🔥 TEXTAREA (SMART INPUT BOX) */
+/* 🔥 TEXTAREA */
 textarea{
   width:120px;
   height:60px;
@@ -91,7 +91,6 @@ tr:hover{background:rgba(255,255,255,0.08);}
 
 <div class="container">
 
-<!-- LEFT PANEL -->
 <div class="left card">
   <h2>🎯 Team Panel</h2>
 
@@ -110,7 +109,6 @@ tr:hover{background:rgba(255,255,255,0.08);}
   <button onclick="updateScores()">Update Scores</button>
 </div>
 
-<!-- RIGHT PANEL -->
 <div class="right card">
   <h2>🏆 Leaderboard</h2>
 
@@ -124,6 +122,7 @@ tr:hover{background:rgba(255,255,255,0.08);}
 </div>
 
 <script>
+
 // TEAMS
 const teams = [
   "Team 1","Team 2","Team 3","Team 4","Team 5",
@@ -132,7 +131,6 @@ const teams = [
 
 let startTime = 0;
 let timerStarted = false;
-let data = [];
 
 // ANSWERS
 const answers = [
@@ -175,7 +173,7 @@ function loadPanel(){
   let table = document.getElementById("panel");
 
   teams.forEach((team,i)=>{
-    let row = table.insertRow();
+    let row = table.insertRow(-1);
 
     row.innerHTML = `
       <td>${team}</td>
@@ -188,10 +186,13 @@ function loadPanel(){
 
 // FINISH TEAM
 function finishTeam(i){
+
   let time = Math.floor((Date.now()-startTime)/1000);
 
   document.getElementById("time"+i).innerText = formatTime(time);
   document.getElementById("btn"+i).disabled = true;
+
+  let data = JSON.parse(localStorage.getItem("scores")) || [];
 
   data.push({
     team: teams[i],
@@ -203,7 +204,7 @@ function finishTeam(i){
   loadBoard();
 }
 
-// 🔥 SMART SCORE SYSTEM
+// SMART SCORE
 function updateScores(){
 
   let data = JSON.parse(localStorage.getItem("scores")) || [];
@@ -214,11 +215,9 @@ function updateScores(){
 
     if(!val) return;
 
-    // 🔢 extract number
     let numberMatch = val.match(/\d+/);
     let manualScore = numberMatch ? parseInt(numberMatch[0]) : null;
 
-    // 🧠 extract words
     let words = val.split(/\n|,|\./|\s+/)
                    .map(x => cleanText(x))
                    .filter(x => x !== "");
@@ -231,19 +230,16 @@ function updateScores(){
       }
     });
 
-    // FINAL SCORE
-    if(manualScore !== null){
-      row.score = Math.max(manualScore, detectedScore);
-    } else {
-      row.score = detectedScore;
-    }
+    row.score = manualScore !== null
+      ? Math.max(manualScore, detectedScore)
+      : detectedScore;
   });
 
   localStorage.setItem("scores", JSON.stringify(data));
   loadBoard();
 }
 
-// FILTER PANEL
+// FILTER
 function filterPanel(){
   let search = document.getElementById("searchBox2").value.toLowerCase();
   document.getElementById("searchBox").value = search;
@@ -259,14 +255,13 @@ function filterPanel(){
   loadBoard();
 }
 
-// SYNC SEARCH
 function syncSearch(){
   let val = document.getElementById("searchBox").value;
   document.getElementById("searchBox2").value = val;
   loadBoard();
 }
 
-// LOAD BOARD
+// BOARD
 function loadBoard(){
   let data = JSON.parse(localStorage.getItem("scores")) || [];
   let search = document.getElementById("searchBox")?.value.toLowerCase() || "";
@@ -329,6 +324,7 @@ window.onload = function(){
   loadPanel();
   loadBoard();
 };
+
 </script>
 
 </body>

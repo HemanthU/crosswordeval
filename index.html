@@ -15,7 +15,7 @@ body{
 
 h1{text-align:center;}
 
-/* 🔥 BIG TIMER */
+/* TIMER */
 #timer{
   text-align:center;
   font-size:120px;
@@ -35,20 +35,20 @@ h1{text-align:center;}
   backdrop-filter:blur(12px);
   padding:20px;
   border-radius:16px;
-  box-shadow:0 0 20px rgba(0,0,0,0.3);
 }
 
 .left{width:55%;}
 .right{width:45%;}
 
-/* INPUTS */
+/* INPUT */
 textarea{
   width:100%;
-  height:150px;
+  height:140px;
   border-radius:10px;
-  padding:10px;
+  padding:12px;
   border:none;
   outline:none;
+  font-size:15px;
 }
 
 input{
@@ -56,7 +56,6 @@ input{
   padding:8px;
   border-radius:8px;
   border:none;
-  outline:none;
 }
 
 /* BUTTON */
@@ -68,7 +67,7 @@ button{
   color:white;
   margin:5px;
   background:linear-gradient(135deg,#22c55e,#16a34a);
-  transition:0.3s;
+  transition:0.2s;
 }
 
 button:hover{
@@ -91,12 +90,8 @@ table{
 }
 
 td,th{
-  padding:12px;
+  padding:10px;
   border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-tr:hover{
-  background:rgba(255,255,255,0.08);
 }
 
 /* MOBILE */
@@ -121,19 +116,19 @@ tr:hover{
 
 <div class="container">
 
-<!-- LEFT PANEL -->
+<!-- LEFT -->
 <div class="left card">
 
-<h2>🧩 Answer Panel</h2>
+<h2>🧩 Answer / Score Input</h2>
 
 <input id="teamName" placeholder="Enter Team Name">
 <br><br>
 
-<textarea id="bulkInput" placeholder="Paste answers OR enter score (e.g., 10)"></textarea>
+<textarea id="bulkInput" placeholder="Paste answers OR enter score (e.g. 10)"></textarea>
 
 <br>
 
-<button onclick="checkAnswers()">Check</button>
+<button onclick="processInput()">Check</button>
 <button onclick="submitScore()">Submit</button>
 
 <div id="score"></div>
@@ -141,149 +136,131 @@ tr:hover{
 
 </div>
 
-<!-- RIGHT PANEL -->
+<!-- RIGHT -->
 <div class="right card">
-
 <h2>🏆 Leaderboard</h2>
 <div id="board"></div>
-
 </div>
 
 </div>
 
 <script>
-// ================= TIMER =================
-let startTime = 0;
-let timerStarted = false;
+// TIMER
+let startTime=0, timerStarted=false;
 
 function formatTime(sec){
-  let m = Math.floor(sec/60);
-  let s = sec % 60;
-  return m + "m " + s + "s";
+  return Math.floor(sec/60)+"m "+(sec%60)+"s";
 }
 
 function startTimer(){
   if(timerStarted) return;
-
-  timerStarted = true;
-  document.getElementById("startBtn").disabled = true;
-
-  startTime = Date.now();
+  timerStarted=true;
+  startTime=Date.now();
+  document.getElementById("startBtn").disabled=true;
 
   setInterval(()=>{
-    let t = Math.floor((Date.now()-startTime)/1000);
-    document.getElementById("timer").innerText = formatTime(t);
+    let t=Math.floor((Date.now()-startTime)/1000);
+    document.getElementById("timer").innerText=formatTime(t);
   },1000);
 }
 
-// ================= ANSWERS =================
-const answers = [
-  "ALGORITHM","WEB BROWSER","BACKUP",
-  "FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
-  "OTT PLATFORMS","PIXEL","MESSAGING APPS","STACK",
-  "SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
+// ANSWERS
+const answers=[
+"ALGORITHM","WEB BROWSER","BACKUP",
+"FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
+"OTT PLATFORMS","PIXEL","MESSAGING APPS","STACK",
+"SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
 ];
 
-// CLEAN TEXT (ignore numbers, symbols, spaces)
-function cleanText(text){
-  return text.toUpperCase().replace(/[^A-Z]/g,"");
+// CLEAN
+function cleanText(t){
+  return t.toUpperCase().replace(/[^A-Z]/g,"");
 }
 
-let lastScore = 0;
+let lastScore=0;
 
-// ================= CHECK =================
-function checkAnswers(){
-  let input = document.getElementById("bulkInput").value.trim();
+// MAIN LOGIC
+function processInput(){
+  let input=document.getElementById("bulkInput").value.trim();
 
-  // ✅ Manual score
+  // 🔢 If number only
   if(/^\d+$/.test(input)){
-    lastScore = parseInt(input);
-
-    document.getElementById("score").innerText =
-      "🎯 Score: " + lastScore + " / " + answers.length;
-
-    document.getElementById("result").innerHTML =
-      "<div class='correct'>✅ Manual score used</div>";
-
+    lastScore=parseInt(input);
+    showScore(lastScore,"Manual score used ✅");
     return;
   }
 
-  // ✅ Auto check text
-  let words = input.split(/\n|,|\./)
-                   .map(x => cleanText(x))
-                   .filter(x => x !== "");
+  // 🧠 Extract words (ignore numbers/symbols)
+  let words=input.split(/\n|,|\./)
+    .map(x=>cleanText(x))
+    .filter(x=>x!="");
 
-  let score = 0;
-  let resultHTML = "";
+  let score=0, html="";
 
   answers.forEach(ans=>{
-    let cleanAns = cleanText(ans);
+    let c=cleanText(ans);
 
-    if(words.includes(cleanAns)){
-      resultHTML += `<div class="correct">✅ ${ans}</div>`;
+    if(words.includes(c)){
+      html+=`<div class="correct">✅ ${ans}</div>`;
       score++;
-    } else {
-      resultHTML += `<div class="wrong">❌ ${ans}</div>`;
+    }else{
+      html+=`<div class="wrong">❌ ${ans}</div>`;
     }
   });
 
-  lastScore = score;
-
-  document.getElementById("score").innerText =
-    "🎯 Score: " + score + " / " + answers.length;
-
-  document.getElementById("result").innerHTML = resultHTML;
+  lastScore=score;
+  showScore(score,html);
 }
 
-// ================= LEADERBOARD =================
-let data = JSON.parse(localStorage.getItem("board")) || [];
+function showScore(score,html){
+  document.getElementById("score").innerText=
+    "🎯 Score: "+score+" / "+answers.length;
+
+  document.getElementById("result").innerHTML=
+    typeof html==="string" && html.includes("div") ? html :
+    `<div class="correct">${html}</div>`;
+}
+
+// LEADERBOARD
+let data=JSON.parse(localStorage.getItem("board"))||[];
 
 function submitScore(){
-  let name = document.getElementById("teamName").value;
+  let name=document.getElementById("teamName").value;
+  if(!name){alert("Enter team name");return;}
 
-  if(!name){
-    alert("Enter team name");
-    return;
-  }
+  let time=Math.floor((Date.now()-startTime)/1000);
 
-  let time = Math.floor((Date.now()-startTime)/1000);
-
-  data.push({ name, score:lastScore, time });
-
-  localStorage.setItem("board", JSON.stringify(data));
+  data.push({name,score:lastScore,time});
+  localStorage.setItem("board",JSON.stringify(data));
   loadBoard();
 }
 
 function loadBoard(){
-  let html = "<table><tr><th>Rank</th><th>Team</th><th>Score</th><th>Time</th></tr>";
+  let html="<table><tr><th>Rank</th><th>Team</th><th>Score</th><th>Time</th></tr>";
 
-  data.sort((a,b)=>{
-    if(b.score !== a.score) return b.score - a.score;
-    return a.time - b.time;
-  });
+  data.sort((a,b)=> b.score!==a.score ? b.score-a.score : a.time-b.time);
 
-  data.forEach((row,i)=>{
-    let medal = i==0?"🥇":i==1?"🥈":i==2?"🥉":(i+1);
-
-    html += `<tr>
-      <td>${medal}</td>
-      <td>${row.name}</td>
-      <td>${row.score}</td>
-      <td>${formatTime(row.time)}</td>
+  data.forEach((r,i)=>{
+    let rank=i<3?["🥇","🥈","🥉"][i]:i+1;
+    html+=`<tr>
+      <td>${rank}</td>
+      <td>${r.name}</td>
+      <td>${r.score}</td>
+      <td>${formatTime(r.time)}</td>
     </tr>`;
   });
 
-  html += "</table>";
-  document.getElementById("board").innerHTML = html;
+  html+="</table>";
+  document.getElementById("board").innerHTML=html;
 }
 
-// ================= RESET =================
+// RESET
 function resetAll(){
   localStorage.removeItem("board");
   location.reload();
 }
 
-window.onload = loadBoard;
+window.onload=loadBoard;
 </script>
 
 </body>

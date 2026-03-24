@@ -15,10 +15,10 @@ body{
 
 h1{text-align:center;}
 
-/* 🔥 INCREASED TIMER SIZE */
+/* 🔥 BIGGER TIMER */
 #timer{
   text-align:center;
-  font-size:120px; /* increased */
+  font-size:120px;
   font-weight:bold;
   margin:20px 0;
   text-shadow:0 0 15px #22c55e,0 0 35px #22c55e;
@@ -39,13 +39,16 @@ h1{text-align:center;}
 table{width:100%;border-collapse:collapse;}
 td,th{padding:12px;border-bottom:1px solid rgba(255,255,255,0.1);}
 
-/* ❗ INPUT NOW ACCEPTS TEXT ALSO */
-input{
-  width:80px;
+/* 🔥 TEXTAREA (SMART INPUT BOX) */
+textarea{
+  width:120px;
+  height:60px;
   padding:6px;
   border-radius:6px;
   border:none;
   text-align:center;
+  resize:none;
+  font-size:12px;
 }
 
 .search{
@@ -88,6 +91,7 @@ tr:hover{background:rgba(255,255,255,0.08);}
 
 <div class="container">
 
+<!-- LEFT PANEL -->
 <div class="left card">
   <h2>🎯 Team Panel</h2>
 
@@ -106,6 +110,7 @@ tr:hover{background:rgba(255,255,255,0.08);}
   <button onclick="updateScores()">Update Scores</button>
 </div>
 
+<!-- RIGHT PANEL -->
 <div class="right card">
   <h2>🏆 Leaderboard</h2>
 
@@ -119,6 +124,7 @@ tr:hover{background:rgba(255,255,255,0.08);}
 </div>
 
 <script>
+// TEAMS
 const teams = [
   "Team 1","Team 2","Team 3","Team 4","Team 5",
   "Team 6","Team 7","Team 8","Team 9","Team 10"
@@ -128,7 +134,7 @@ let startTime = 0;
 let timerStarted = false;
 let data = [];
 
-/* 🔥 ANSWERS FOR AUTO CHECK */
+// ANSWERS
 const answers = [
   "ALGORITHM","WEB BROWSER","BACKUP",
   "FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
@@ -136,6 +142,7 @@ const answers = [
   "SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
 ];
 
+// CLEAN TEXT
 function cleanText(text){
   return text.toUpperCase().replace(/[^A-Z]/g,"");
 }
@@ -163,7 +170,7 @@ function startTimer(){
   },1000);
 }
 
-// PANEL
+// LOAD PANEL
 function loadPanel(){
   let table = document.getElementById("panel");
 
@@ -172,14 +179,14 @@ function loadPanel(){
 
     row.innerHTML = `
       <td>${team}</td>
-      <td><input id="score${i}"></td>
+      <td><textarea id="score${i}" placeholder="Score / Paste"></textarea></td>
       <td><button id="btn${i}" onclick="finishTeam(${i})">Finish</button></td>
       <td id="time${i}">-</td>
     `;
   });
 }
 
-// FINISH
+// FINISH TEAM
 function finishTeam(i){
   let time = Math.floor((Date.now()-startTime)/1000);
 
@@ -196,8 +203,9 @@ function finishTeam(i){
   loadBoard();
 }
 
-// 🔥 SMART SCORE UPDATE
+// 🔥 SMART SCORE SYSTEM
 function updateScores(){
+
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 
   data.forEach(row=>{
@@ -206,33 +214,36 @@ function updateScores(){
 
     if(!val) return;
 
-    // ✅ NUMBER
-    if(/^\d+$/.test(val)){
-      row.score = parseInt(val);
-      return;
-    }
+    // 🔢 extract number
+    let numberMatch = val.match(/\d+/);
+    let manualScore = numberMatch ? parseInt(numberMatch[0]) : null;
 
-    // ✅ TEXT (AUTO CHECK)
-    let words = val.split(/\n|,|\./)
+    // 🧠 extract words
+    let words = val.split(/\n|,|\./|\s+/)
                    .map(x => cleanText(x))
                    .filter(x => x !== "");
 
-    let score = 0;
+    let detectedScore = 0;
 
     answers.forEach(ans=>{
       if(words.includes(cleanText(ans))){
-        score++;
+        detectedScore++;
       }
     });
 
-    row.score = score;
+    // FINAL SCORE
+    if(manualScore !== null){
+      row.score = Math.max(manualScore, detectedScore);
+    } else {
+      row.score = detectedScore;
+    }
   });
 
   localStorage.setItem("scores", JSON.stringify(data));
   loadBoard();
 }
 
-// FILTER
+// FILTER PANEL
 function filterPanel(){
   let search = document.getElementById("searchBox2").value.toLowerCase();
   document.getElementById("searchBox").value = search;
@@ -248,13 +259,14 @@ function filterPanel(){
   loadBoard();
 }
 
+// SYNC SEARCH
 function syncSearch(){
   let val = document.getElementById("searchBox").value;
   document.getElementById("searchBox2").value = val;
   loadBoard();
 }
 
-// BOARD
+// LOAD BOARD
 function loadBoard(){
   let data = JSON.parse(localStorage.getItem("scores")) || [];
   let search = document.getElementById("searchBox")?.value.toLowerCase() || "";

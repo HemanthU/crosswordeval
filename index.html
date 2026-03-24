@@ -5,7 +5,8 @@
 <title>Event Dashboard</title>
 
 <style>
-body{
+html, body {
+  height: 100%;
   margin:0;
   font-family:sans-serif;
   background:linear-gradient(135deg,#0f172a,#1e293b);
@@ -13,36 +14,45 @@ body{
   padding:20px;
 }
 
+/* HEADER */
 h1{text-align:center;}
 
 /* 🔥 BIG TIMER */
 #timer{
   text-align:center;
-  font-size:150px;
+  font-size:250px; /* increased size */
   font-weight:bold;
   margin:20px 0;
   text-shadow:0 0 20px #22c55e, 0 0 50px #22c55e;
   letter-spacing:3px;
 }
 
-.container{display:flex;gap:20px;}
+/* CONTAINER FLEX */
+.container{
+  display:flex;
+  gap:20px;
+  height: calc(100vh - 200px); /* fill available height */
+}
 
+/* CARDS */
 .card{
   background:rgba(255,255,255,0.05);
   backdrop-filter:blur(10px);
   padding:20px;
   border-radius:16px;
+  height: 100%;
+  overflow-y: auto; /* optional, smooth scrolling inside card */
 }
 
-/* SCROLL PANEL */
+/* LEFT PANEL */
 .left{
   width:55%;
-  max-height:500px;
-  overflow-y:auto;
 }
 
+/* RIGHT PANEL */
 .right{width:45%;}
 
+/* TABLES */
 table{width:100%;border-collapse:collapse;}
 td,th{padding:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
 
@@ -91,7 +101,7 @@ tr:hover{
 @media(max-width:768px){
   .container{flex-direction:column;}
   .left,.right{width:100%;}
-  #timer{font-size:70px;}
+  #timer{font-size:120px;} /* scaled for mobile */
 }
 </style>
 </head>
@@ -202,7 +212,7 @@ function finishTeam(i){
   loadBoard();
 }
 
-// UPDATE SCORES (FIXED)
+// UPDATE SCORES
 function updateScores(){
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 

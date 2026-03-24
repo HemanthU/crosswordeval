@@ -15,23 +15,26 @@ body{
 
 h1{text-align:center;}
 
+/* 🔥 BIG TIMER */
 #timer{
   text-align:center;
-  font-size:100px;
+  font-size:150px;
   font-weight:bold;
   margin:20px 0;
+  text-shadow:0 0 20px #22c55e, 0 0 50px #22c55e;
+  letter-spacing:3px;
 }
 
-/* LAYOUT */
 .container{display:flex;gap:20px;}
 
 .card{
   background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(10px);
   padding:20px;
   border-radius:16px;
 }
 
-/* 🔥 SCROLLABLE TEAM PANEL */
+/* SCROLL PANEL */
 .left{
   width:55%;
   max-height:500px;
@@ -43,27 +46,52 @@ h1{text-align:center;}
 table{width:100%;border-collapse:collapse;}
 td,th{padding:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
 
-/* INPUT */
+/* TEXTAREA */
 textarea{
   width:120px;
-  height:50px;
+  height:60px;
+  padding:6px;
+  border-radius:6px;
+  border:none;
+  text-align:center;
+  resize:none;
   font-size:12px;
 }
 
 /* SEARCH */
 .search{
   width:100%;
-  padding:8px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
   margin-bottom:10px;
 }
 
+/* GREEN BUTTONS */
 button{
-  padding:6px 10px;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
   cursor:pointer;
+  color:white;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  transition:0.2s;
+}
+
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 10px #22c55e;
 }
 
 tr:hover{
   background:rgba(255,255,255,0.08);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .container{flex-direction:column;}
+  .left,.right{width:100%;}
+  #timer{font-size:70px;}
 }
 </style>
 </head>
@@ -74,13 +102,13 @@ tr:hover{
 
 <div style="text-align:center;">
   <button onclick="startTimer()">Start Event</button>
+  <button onclick="resetAll()">Reset</button>
 </div>
 
 <h2 id="timer">0m 0s</h2>
 
 <div class="container">
 
-<!-- LEFT -->
 <div class="left card">
   <h2>🎯 Team Panel</h2>
 
@@ -98,7 +126,6 @@ tr:hover{
   <button onclick="updateScores()">Update Scores</button>
 </div>
 
-<!-- RIGHT -->
 <div class="right card">
   <h2>🏆 Leaderboard</h2>
   <div id="board"></div>
@@ -108,13 +135,14 @@ tr:hover{
 
 <script>
 
-// 🔥 50 TEAMS AUTO GENERATED
+// 🔥 50 TEAMS
 const teams = [];
 for(let i=1;i<=50;i++){
   teams.push("Team " + i);
 }
 
 let startTime = 0;
+let timerStarted = false;
 
 // ANSWERS
 const answers = [
@@ -122,17 +150,22 @@ const answers = [
   "PIXEL","STACK","URL","PASSWORD"
 ];
 
+// CLEAN TEXT
 function cleanText(t){
   return t.toUpperCase().replace(/[^A-Z]/g,"");
 }
 
+// TIMER
 function formatTime(sec){
   return Math.floor(sec/60)+"m "+(sec%60)+"s";
 }
 
-// TIMER
 function startTimer(){
+  if(timerStarted) return;
+
+  timerStarted = true;
   startTime = Date.now();
+
   setInterval(function(){
     let t = Math.floor((Date.now()-startTime)/1000);
     document.getElementById("timer").innerText = formatTime(t);
@@ -149,16 +182,17 @@ function loadPanel(){
     row.innerHTML =
       "<td>"+teams[i]+"</td>"+
       "<td><textarea id='score"+i+"' placeholder='Score / Paste'></textarea></td>"+
-      "<td><button onclick='finishTeam("+i+")'>Finish</button></td>"+
+      "<td><button id='btn"+i+"' onclick='finishTeam("+i+")'>Finish</button></td>"+
       "<td id='time"+i+"'>-</td>";
   }
 }
 
-// FINISH
+// FINISH TEAM
 function finishTeam(i){
   let time = Math.floor((Date.now()-startTime)/1000);
 
   document.getElementById("time"+i).innerText = formatTime(time);
+  document.getElementById("btn"+i).disabled = true;
 
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 
@@ -168,7 +202,7 @@ function finishTeam(i){
   loadBoard();
 }
 
-// SCORE UPDATE
+// UPDATE SCORES (FIXED)
 function updateScores(){
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 
@@ -183,12 +217,14 @@ function updateScores(){
     let numberMatch = val.match(/\d+/);
     let manual = numberMatch ? parseInt(numberMatch[0]) : 0;
 
-    let words = val.split(/\s+/).map(cleanText);
+    let fullText = cleanText(val);
 
     let detected = 0;
 
     for(let k=0;k<answers.length;k++){
-      if(words.indexOf(cleanText(answers[k])) !== -1){
+      let ans = cleanText(answers[k]);
+
+      if(fullText.includes(ans)){
         detected++;
       }
     }
@@ -218,7 +254,10 @@ function loadBoard(){
   let html = "<table><tr><th>Team</th><th>Score</th><th>Time</th></tr>";
 
   data.sort(function(a,b){
-    return (b.score||0)-(a.score||0);
+    if((b.score||0)!==(a.score||0)){
+      return (b.score||0)-(a.score||0);
+    }
+    return a.time - b.time;
   });
 
   for(let i=0;i<data.length;i++){
@@ -228,6 +267,12 @@ function loadBoard(){
   html += "</table>";
 
   document.getElementById("board").innerHTML = html;
+}
+
+// RESET
+function resetAll(){
+  localStorage.removeItem("scores");
+  location.reload();
 }
 
 // INIT

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Event + Crossword Checker</title>
+<title>Event Dashboard</title>
 
 <style>
 body{
@@ -10,70 +10,101 @@ body{
   font-family:sans-serif;
   background:linear-gradient(135deg,#0f172a,#1e293b);
   color:white;
-  text-align:center;
   padding:20px;
 }
 
+h1{text-align:center;}
+
 /* 🔥 BIG TIMER */
 #timer{
-  font-size:120px; /* increased */
+  text-align:center;
+  font-size:120px;
   font-weight:bold;
   margin:20px 0;
-  text-shadow:0 0 15px #22c55e,0 0 35px #22c55e;
+  text-shadow:0 0 15px #22c55e,0 0 40px #22c55e;
+}
+
+/* LAYOUT */
+.container{
+  display:flex;
+  gap:20px;
+}
+
+.card{
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(12px);
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 0 20px rgba(0,0,0,0.3);
+}
+
+.left{width:55%;}
+.right{width:45%;}
+
+/* INPUTS */
+textarea{
+  width:100%;
+  height:150px;
+  border-radius:10px;
+  padding:10px;
+  border:none;
+  outline:none;
+}
+
+input{
+  width:70%;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  outline:none;
 }
 
 /* BUTTON */
 button{
-  padding:10px 15px;
+  padding:10px 16px;
   border:none;
-  border-radius:8px;
-  background:#22c55e;
-  color:white;
+  border-radius:10px;
   cursor:pointer;
+  color:white;
   margin:5px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  transition:0.3s;
 }
 
-/* CARD */
-.container{
-  max-width:750px;
-  margin:auto;
-  background:rgba(255,255,255,0.05);
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
-}
-
-/* INPUT */
-input{
-  padding:8px;
-  border-radius:6px;
-  border:none;
-}
-
-/* TEXTAREA */
-textarea{
-  width:90%;
-  height:120px;
-  border-radius:8px;
-  padding:10px;
-  margin:10px 0;
+button:hover{
+  transform:scale(1.05);
 }
 
 /* RESULT */
-#result{text-align:left;}
 .correct{color:#22c55e;}
 .wrong{color:#ef4444;}
+
+#score{
+  font-size:22px;
+  margin-top:10px;
+}
 
 /* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
 }
+
 td,th{
-  padding:10px;
+  padding:12px;
   border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
+tr:hover{
+  background:rgba(255,255,255,0.08);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .container{flex-direction:column;}
+  .left,.right{width:100%;}
+  #timer{font-size:60px;}
+}
 </style>
 </head>
 
@@ -81,39 +112,47 @@ td,th{
 
 <h1>⚡ Event Dashboard</h1>
 
-<button id="startBtn" onclick="startTimer()">Start Event</button>
-<button onclick="resetAll()">Reset</button>
+<div style="text-align:center;">
+  <button id="startBtn" onclick="startTimer()">Start Event</button>
+  <button onclick="resetAll()">Reset</button>
+</div>
 
 <div id="timer">0m 0s</div>
 
-<!-- CHECKER -->
 <div class="container">
 
-<h2>🧩 Paste Answers</h2>
+<!-- LEFT PANEL -->
+<div class="left card">
+
+<h2>🧩 Answer Panel</h2>
 
 <input id="teamName" placeholder="Enter Team Name">
+<br><br>
 
-<textarea id="bulkInput" placeholder="Paste answers..."></textarea>
+<textarea id="bulkInput" placeholder="Paste answers OR enter score (e.g., 10)"></textarea>
 
 <br>
-<button onclick="checkAll()">Check Answers</button>
-<button onclick="submitScore()">Submit Score</button>
+
+<button onclick="checkAnswers()">Check</button>
+<button onclick="submitScore()">Submit</button>
 
 <div id="score"></div>
 <div id="result"></div>
 
 </div>
 
-<!-- LEADERBOARD -->
-<div class="container">
+<!-- RIGHT PANEL -->
+<div class="right card">
 
 <h2>🏆 Leaderboard</h2>
 <div id="board"></div>
 
 </div>
 
+</div>
+
 <script>
-// TIMER
+// ================= TIMER =================
 let startTime = 0;
 let timerStarted = false;
 
@@ -137,7 +176,7 @@ function startTimer(){
   },1000);
 }
 
-// ANSWERS
+// ================= ANSWERS =================
 const answers = [
   "ALGORITHM","WEB BROWSER","BACKUP",
   "FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
@@ -145,18 +184,32 @@ const answers = [
   "SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
 ];
 
-// CLEAN
+// CLEAN TEXT (ignore numbers, symbols, spaces)
 function cleanText(text){
-  return text.toUpperCase().replace(/\s+/g,"").trim();
+  return text.toUpperCase().replace(/[^A-Z]/g,"");
 }
 
-// CHECK
 let lastScore = 0;
 
-function checkAll(){
-  let input = document.getElementById("bulkInput").value;
+// ================= CHECK =================
+function checkAnswers(){
+  let input = document.getElementById("bulkInput").value.trim();
 
-  let words = input.split(/[\n,]+/)
+  // ✅ Manual score
+  if(/^\d+$/.test(input)){
+    lastScore = parseInt(input);
+
+    document.getElementById("score").innerText =
+      "🎯 Score: " + lastScore + " / " + answers.length;
+
+    document.getElementById("result").innerHTML =
+      "<div class='correct'>✅ Manual score used</div>";
+
+    return;
+  }
+
+  // ✅ Auto check text
+  let words = input.split(/\n|,|\./)
                    .map(x => cleanText(x))
                    .filter(x => x !== "");
 
@@ -182,7 +235,7 @@ function checkAll(){
   document.getElementById("result").innerHTML = resultHTML;
 }
 
-// LEADERBOARD
+// ================= LEADERBOARD =================
 let data = JSON.parse(localStorage.getItem("board")) || [];
 
 function submitScore(){
@@ -195,27 +248,25 @@ function submitScore(){
 
   let time = Math.floor((Date.now()-startTime)/1000);
 
-  data.push({
-    name:name,
-    score:lastScore,
-    time:time
-  });
+  data.push({ name, score:lastScore, time });
 
   localStorage.setItem("board", JSON.stringify(data));
-
   loadBoard();
 }
 
 function loadBoard(){
-  let html = "<table><tr><th>Team</th><th>Score</th><th>Time</th></tr>";
+  let html = "<table><tr><th>Rank</th><th>Team</th><th>Score</th><th>Time</th></tr>";
 
   data.sort((a,b)=>{
     if(b.score !== a.score) return b.score - a.score;
     return a.time - b.time;
   });
 
-  data.forEach(row=>{
+  data.forEach((row,i)=>{
+    let medal = i==0?"🥇":i==1?"🥈":i==2?"🥉":(i+1);
+
     html += `<tr>
+      <td>${medal}</td>
       <td>${row.name}</td>
       <td>${row.score}</td>
       <td>${formatTime(row.time)}</td>
@@ -223,17 +274,15 @@ function loadBoard(){
   });
 
   html += "</table>";
-
   document.getElementById("board").innerHTML = html;
 }
 
-// RESET
+// ================= RESET =================
 function resetAll(){
   localStorage.removeItem("board");
   location.reload();
 }
 
-// INIT
 window.onload = loadBoard;
 </script>
 

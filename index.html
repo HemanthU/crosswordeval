@@ -15,65 +15,55 @@ body{
 
 h1{text-align:center;}
 
-/* 🔥 BIG TIMER */
 #timer{
   text-align:center;
-  font-size:120px;
+  font-size:100px;
   font-weight:bold;
   margin:20px 0;
-  text-shadow:0 0 15px #22c55e,0 0 35px #22c55e;
 }
 
+/* LAYOUT */
 .container{display:flex;gap:20px;}
 
 .card{
   background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(10px);
   padding:20px;
   border-radius:16px;
 }
 
-.left{width:55%;}
+/* 🔥 SCROLLABLE TEAM PANEL */
+.left{
+  width:55%;
+  max-height:500px;
+  overflow-y:auto;
+}
+
 .right{width:45%;}
 
 table{width:100%;border-collapse:collapse;}
-td,th{padding:12px;border-bottom:1px solid rgba(255,255,255,0.1);}
+td,th{padding:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
 
-/* 🔥 TEXTAREA */
+/* INPUT */
 textarea{
   width:120px;
-  height:60px;
-  padding:6px;
-  border-radius:6px;
-  border:none;
-  text-align:center;
-  resize:none;
+  height:50px;
   font-size:12px;
 }
 
+/* SEARCH */
 .search{
   width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:none;
+  padding:8px;
   margin-bottom:10px;
 }
 
 button{
-  padding:8px 14px;
-  border:none;
-  border-radius:8px;
+  padding:6px 10px;
   cursor:pointer;
-  color:white;
-  background:linear-gradient(135deg,#22c55e,#16a34a);
 }
 
-tr:hover{background:rgba(255,255,255,0.08);}
-
-@media(max-width:768px){
-  .container{flex-direction:column;}
-  .left,.right{width:100%;}
-  #timer{font-size:60px;}
+tr:hover{
+  background:rgba(255,255,255,0.08);
 }
 </style>
 </head>
@@ -83,18 +73,18 @@ tr:hover{background:rgba(255,255,255,0.08);}
 <h1>⚡ Event Dashboard</h1>
 
 <div style="text-align:center;">
-  <button id="startBtn" onclick="startTimer()">Start Event</button>
-  <button onclick="resetAll()">Reset</button>
+  <button onclick="startTimer()">Start Event</button>
 </div>
 
 <h2 id="timer">0m 0s</h2>
 
 <div class="container">
 
+<!-- LEFT -->
 <div class="left card">
   <h2>🎯 Team Panel</h2>
 
-  <input id="searchBox2" class="search" placeholder="🔍 Search team..." onkeyup="filterPanel()">
+  <input id="searchBox2" class="search" placeholder="Search team..." onkeyup="filterPanel()">
 
   <table id="panel">
     <tr>
@@ -105,17 +95,12 @@ tr:hover{background:rgba(255,255,255,0.08);}
     </tr>
   </table>
 
-  <br>
   <button onclick="updateScores()">Update Scores</button>
 </div>
 
+<!-- RIGHT -->
 <div class="right card">
   <h2>🏆 Leaderboard</h2>
-
-  <input id="searchBox" class="search" placeholder="🔍 Search team..." onkeyup="syncSearch()">
-  <button onclick="exportData()">Export</button>
-
-  <br><br>
   <div id="board"></div>
 </div>
 
@@ -123,46 +108,32 @@ tr:hover{background:rgba(255,255,255,0.08);}
 
 <script>
 
-// TEAMS
-const teams = [
-  "Team 1","Team 2","Team 3","Team 4","Team 5",
-  "Team 6","Team 7","Team 8","Team 9","Team 10"
-];
+// 🔥 50 TEAMS AUTO GENERATED
+const teams = [];
+for(let i=1;i<=50;i++){
+  teams.push("Team " + i);
+}
 
 let startTime = 0;
-let timerStarted = false;
 
 // ANSWERS
 const answers = [
   "ALGORITHM","WEB BROWSER","BACKUP",
-  "FOOD DELIVERY APPS","VIDEO SHARING PLATFORMS","CLOUD COMPUTING",
-  "OTT PLATFORMS","PIXEL","MESSAGING APPS","STACK",
-  "SOCIAL MEDIA","RIDE SHARING","EMAIL SERVICES","URL","PASSWORD"
+  "PIXEL","STACK","URL","PASSWORD"
 ];
 
-// CLEAN TEXT
-function cleanText(text){
-  return text.toUpperCase().replace(/[^A-Z]/g,"");
+function cleanText(t){
+  return t.toUpperCase().replace(/[^A-Z]/g,"");
+}
+
+function formatTime(sec){
+  return Math.floor(sec/60)+"m "+(sec%60)+"s";
 }
 
 // TIMER
-function formatTime(sec){
-  let m = Math.floor(sec/60);
-  let s = sec % 60;
-  return m + "m " + s + "s";
-}
-
 function startTimer(){
-  if(timerStarted){
-    alert("Timer already started!");
-    return;
-  }
-  timerStarted = true;
-  document.getElementById("startBtn").disabled = true;
-
   startTime = Date.now();
-
-  setInterval(()=>{
+  setInterval(function(){
     let t = Math.floor((Date.now()-startTime)/1000);
     document.getElementById("timer").innerText = formatTime(t);
   },1000);
@@ -172,68 +143,58 @@ function startTimer(){
 function loadPanel(){
   let table = document.getElementById("panel");
 
-  teams.forEach((team,i)=>{
+  for(let i=0;i<teams.length;i++){
     let row = table.insertRow(-1);
 
-    row.innerHTML = `
-      <td>${team}</td>
-      <td><textarea id="score${i}" placeholder="Score / Paste"></textarea></td>
-      <td><button id="btn${i}" onclick="finishTeam(${i})">Finish</button></td>
-      <td id="time${i}">-</td>
-    `;
-  });
+    row.innerHTML =
+      "<td>"+teams[i]+"</td>"+
+      "<td><textarea id='score"+i+"' placeholder='Score / Paste'></textarea></td>"+
+      "<td><button onclick='finishTeam("+i+")'>Finish</button></td>"+
+      "<td id='time"+i+"'>-</td>";
+  }
 }
 
-// FINISH TEAM
+// FINISH
 function finishTeam(i){
-
   let time = Math.floor((Date.now()-startTime)/1000);
 
   document.getElementById("time"+i).innerText = formatTime(time);
-  document.getElementById("btn"+i).disabled = true;
 
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 
-  data.push({
-    team: teams[i],
-    time: time,
-    score: null
-  });
+  data.push({team:teams[i], time:time, score:null});
 
   localStorage.setItem("scores", JSON.stringify(data));
   loadBoard();
 }
 
-// SMART SCORE
+// SCORE UPDATE
 function updateScores(){
-
   let data = JSON.parse(localStorage.getItem("scores")) || [];
 
-  data.forEach(row=>{
+  for(let j=0;j<data.length;j++){
+    let row = data[j];
     let index = teams.indexOf(row.team);
-    let val = document.getElementById("score"+index)?.value.trim();
 
-    if(!val) return;
+    let val = document.getElementById("score"+index).value;
+
+    if(!val) continue;
 
     let numberMatch = val.match(/\d+/);
-    let manualScore = numberMatch ? parseInt(numberMatch[0]) : null;
+    let manual = numberMatch ? parseInt(numberMatch[0]) : 0;
 
-    let words = val.split(/\n|,|\./|\s+/)
-                   .map(x => cleanText(x))
-                   .filter(x => x !== "");
+    let words = val.split(/\s+/).map(cleanText);
 
-    let detectedScore = 0;
+    let detected = 0;
 
-    answers.forEach(ans=>{
-      if(words.includes(cleanText(ans))){
-        detectedScore++;
+    for(let k=0;k<answers.length;k++){
+      if(words.indexOf(cleanText(answers[k])) !== -1){
+        detected++;
       }
-    });
+    }
 
-    row.score = manualScore !== null
-      ? Math.max(manualScore, detectedScore)
-      : detectedScore;
-  });
+    row.score = Math.max(manual, detected);
+  }
 
   localStorage.setItem("scores", JSON.stringify(data));
   loadBoard();
@@ -242,87 +203,37 @@ function updateScores(){
 // FILTER
 function filterPanel(){
   let search = document.getElementById("searchBox2").value.toLowerCase();
-  document.getElementById("searchBox").value = search;
-
   let rows = document.querySelectorAll("#panel tr");
 
-  rows.forEach((row,i)=>{
-    if(i===0) return;
-    let team = row.cells[0].innerText.toLowerCase();
-    row.style.display = team.includes(search) ? "" : "none";
-  });
-
-  loadBoard();
+  for(let i=1;i<rows.length;i++){
+    let team = rows[i].cells[0].innerText.toLowerCase();
+    rows[i].style.display = team.includes(search) ? "" : "none";
+  }
 }
 
-function syncSearch(){
-  let val = document.getElementById("searchBox").value;
-  document.getElementById("searchBox2").value = val;
-  loadBoard();
-}
-
-// BOARD
+// LEADERBOARD
 function loadBoard(){
   let data = JSON.parse(localStorage.getItem("scores")) || [];
-  let search = document.getElementById("searchBox")?.value.toLowerCase() || "";
 
   let html = "<table><tr><th>Team</th><th>Score</th><th>Time</th></tr>";
 
-  let hasScores = data.some(d=>d.score!==null);
-
-  data.sort((a,b)=>{
-    if(hasScores){
-      if((b.score||0)!==(a.score||0)){
-        return (b.score||0)-(a.score||0);
-      }
-      return a.time - b.time;
-    } else {
-      return a.time - b.time;
-    }
+  data.sort(function(a,b){
+    return (b.score||0)-(a.score||0);
   });
 
-  data.forEach(row=>{
-    if(row.team.toLowerCase().includes(search)){
-      html += `<tr>
-        <td>${row.team}</td>
-        <td>${row.score ?? "-"}</td>
-        <td>${formatTime(row.time)}</td>
-      </tr>`;
-    }
-  });
+  for(let i=0;i<data.length;i++){
+    html += "<tr><td>"+data[i].team+"</td><td>"+(data[i].score||"-")+"</td><td>"+formatTime(data[i].time)+"</td></tr>";
+  }
 
   html += "</table>";
+
   document.getElementById("board").innerHTML = html;
-}
-
-// EXPORT
-function exportData(){
-  let data = JSON.parse(localStorage.getItem("scores")) || [];
-
-  let csv = "Team,Score,Time\n";
-
-  data.forEach(row=>{
-    csv += `${row.team},${row.score ?? ""},${formatTime(row.time)}\n`;
-  });
-
-  let blob = new Blob([csv], {type:"text/csv"});
-  let link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "leaderboard.csv";
-  link.click();
-}
-
-// RESET
-function resetAll(){
-  localStorage.removeItem("scores");
-  location.reload();
 }
 
 // INIT
 window.onload = function(){
   localStorage.removeItem("scores");
   loadPanel();
-  loadBoard();
 };
 
 </script>
